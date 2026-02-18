@@ -1,0 +1,57 @@
+# FamilyOS Preferences
+# Copy this file to config/preferences.yaml and fill in your details.
+# preferences.yaml is gitignored — keep your personal schedule private.
+
+family:
+  person1:
+    name: "Alex"           # Primary user (receives Telegram notifications)
+    role: "primary"
+  person2:
+    name: "Jordan"         # Partner (receives email notifications)
+    role: "partner"
+
+childcare:
+  child_name: "Sam"                      # Used in task labels (e.g. "Sam pickup")
+  dropoff_days: [monday, friday]         # Days with daycare/school dropoff
+  dropoff_time: "08:00"                  # When dropoff happens
+  pickup_time: "16:30"                   # When pickup happens
+  earliest_morning: "08:15"             # Hard constraint: no appointments before this on dropoff days
+
+fitness:
+  # List your regular workout schedule
+  # FamilyOS uses this to route dropoffs — if you work out early, you're already up
+  workouts:
+    - day: friday
+      type: "martial_arts"
+      time: "08:30"
+    - day: monday
+      type: "weights"
+    - day: wednesday
+      type: "weights"
+    - day: saturday
+      type: "weights"
+  # Minimum workouts per week (used for health check warnings, not yet enforced)
+  min_per_week: 1
+
+work:
+  # Days with heavy meeting load — FamilyOS won't propose family tasks these days
+  heavy_days: [tuesday, wednesday]
+  # Recurring blocked times (add your standing meetings)
+  blocked_times:
+    - day: tuesday
+      time: "10:00"
+      label: "Weekly 1:1"
+    - day: wednesday
+      time: "12:00"
+      label: "Team sync"
+
+date_nights:
+  # How often to nudge you to schedule a date night
+  min_frequency: "biweekly"    # weekly | biweekly | monthly
+  preferred_days: [friday, saturday]
+  babysitter_needed: true
+
+notifications:
+  # Quiet hours — no non-urgent notifications outside this window
+  quiet_start: "21:00"
+  quiet_end: "07:00"

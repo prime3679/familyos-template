@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+config/preferences.yaml
+familyos.db
+*.db
+*.db-shm
+*.db-wal
