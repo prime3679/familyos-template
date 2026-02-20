@@ -1,4 +1,7 @@
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export interface CalendarEvent {
   id: string;
@@ -17,18 +20,23 @@ const PARTNER_CALENDAR_ID = process.env.PARTNER_CALENDAR_ID ?? PARTNER_ACCOUNT;
 
 function parseEvents(raw: string, calendarLabel: string): CalendarEvent[] {
   const parsed = JSON.parse(raw);
-  return (parsed.events ?? parsed ?? []).map((e: Record<string, unknown>) => ({
-    id: String(e.id ?? e.eventId ?? ''),
-    title: String(e.summary ?? e.title ?? ''),
-    start: String(e.start?.dateTime ?? e.start?.date ?? e.start ?? ''),
-    end: String(e.end?.dateTime ?? e.end?.date ?? e.end ?? ''),
-    calendar: calendarLabel,
-    allDay: !!(e.start as Record<string, unknown>)?.date && !(e.start as Record<string, unknown>)?.dateTime,
-    location: e.location ? String(e.location) : undefined,
-  }));
+  return (parsed.events ?? parsed ?? []).map((e: Record<string, unknown>) => {
+    const startObj = e.start as Record<string, unknown> | undefined;
+    const endObj = e.end as Record<string, unknown> | undefined;
+
+    return {
+      id: String(e.id ?? e.eventId ?? ''),
+      title: String(e.summary ?? e.title ?? ''),
+      start: String(startObj?.dateTime ?? startObj?.date ?? e.start ?? ''),
+      end: String(endObj?.dateTime ?? endObj?.date ?? e.end ?? ''),
+      calendar: calendarLabel,
+      allDay: !!startObj?.date && !startObj?.dateTime,
+      location: e.location ? String(e.location) : undefined,
+    };
+  });
 }
 
-export function getEvents(from: string, to: string): CalendarEvent[] {
+export async function getEvents(from: string, to: string): Promise<CalendarEvent[]> {
   const events: CalendarEvent[] = [];
 
   if (!PRIMARY_ACCOUNT) {
@@ -36,52 +44,62 @@ export function getEvents(from: string, to: string): CalendarEvent[] {
     return events;
   }
 
-  // Primary user's calendar
-  try {
-    const raw = execSync(
-      `gog calendar events primary --from "${from}" --to "${to}" --account ${PRIMARY_ACCOUNT} --json`,
-      { encoding: 'utf8', timeout: 15000 }
-    );
-    events.push(...parseEvents(raw, 'person1'));
-  } catch { /* silent */ }
-
-  // Partner's shared calendar (if configured)
-  if (PARTNER_ACCOUNT && PARTNER_CALENDAR_ID) {
+  const primaryPromise = (async () => {
     try {
-      const raw = execSync(
-        `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+      const { stdout } = await execAsync(
+        `gog calendar events primary --from "${from}" --to "${to}" --account ${PRIMARY_ACCOUNT} --json`,
         { encoding: 'utf8', timeout: 15000 }
       );
-      events.push(...parseEvents(raw, 'person2'));
-    } catch { /* silent */ }
-  }
+      return parseEvents(stdout, 'person1');
+    } catch {
+      return [];
+    }
+  })();
+
+  const partnerPromise = (async () => {
+    if (PARTNER_ACCOUNT && PARTNER_CALENDAR_ID) {
+      try {
+        const { stdout } = await execAsync(
+          `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+          { encoding: 'utf8', timeout: 15000 }
+        );
+        return parseEvents(stdout, 'person2');
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  })();
+
+  const [primaryEvents, partnerEvents] = await Promise.all([primaryPromise, partnerPromise]);
+  events.push(...primaryEvents, ...partnerEvents);
 
   return events;
 }
 
-export function getPartnerEvents(from: string, to: string): CalendarEvent[] {
+export async function getPartnerEvents(from: string, to: string): Promise<CalendarEvent[]> {
   if (!PARTNER_ACCOUNT || !PARTNER_CALENDAR_ID) {
     console.warn('[calendar] PARTNER_GOOGLE_ACCOUNT / PARTNER_CALENDAR_ID not set — skipping partner calendar');
     return [];
   }
   try {
-    const raw = execSync(
+    const { stdout } = await execAsync(
       `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
       { encoding: 'utf8', timeout: 15000 }
     );
-    return parseEvents(raw, 'person2');
+    return parseEvents(stdout, 'person2');
   } catch {
     return [];
   }
 }
 
-export function getWeekEvents(weekStart: Date): CalendarEvent[] {
+export async function getWeekEvents(weekStart: Date): Promise<CalendarEvent[]> {
   const from = formatDate(weekStart);
   const to = formatDate(addDays(weekStart, 7));
   return getEvents(from, to);
 }
 
-export function getTodayEvents(): CalendarEvent[] {
+export async function getTodayEvents(): Promise<CalendarEvent[]> {
   return getEvents('today', 'tomorrow');
 }
 

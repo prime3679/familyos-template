@@ -53,7 +53,22 @@ async function runScan(): Promise<void> {
   const to = formatDate(weekEnd);
 
   // Partner's calendar
-  const partnerEvents = getPartnerEvents(from, to);
+  const partnerEventsPromise = getPartnerEvents(from, to);
+
+  // Supermemory context (optional — set SUPERMEMORY_API_KEY to enable)
+  const supermemoryPromise = Promise.all([
+    querySupermemory('partner schedule travel appointments this week family constraints'),
+    querySupermemory('pending family tasks childcare appointments health'),
+  ]);
+
+  const tasksPromise = identifyWeeklyTasks(db);
+
+  const [partnerEvents, [familyContext, actionContext], allTasks] = await Promise.all([
+    partnerEventsPromise,
+    supermemoryPromise,
+    tasksPromise
+  ]);
+
   if (partnerEvents.length > 0) {
     console.log(`[agent] Partner calendar: ${partnerEvents.length} events in next 10 days`);
     partnerEvents.forEach(e => console.log(`  Partner: ${e.start.split('T')[0]} — ${e.title}`));
@@ -61,11 +76,6 @@ async function runScan(): Promise<void> {
     console.log('[agent] Partner calendar: no events found');
   }
 
-  // Supermemory context (optional — set SUPERMEMORY_API_KEY to enable)
-  const [familyContext, actionContext] = await Promise.all([
-    querySupermemory('partner schedule travel appointments this week family constraints'),
-    querySupermemory('pending family tasks childcare appointments health'),
-  ]);
   if (familyContext || actionContext) {
     console.log('[agent] Supermemory context loaded');
   }
@@ -75,7 +85,6 @@ async function runScan(): Promise<void> {
     ? `\n📅 Partner's schedule:\n${partnerEvents.map(e => `  • ${e.start.split('T')[0]} — ${e.title}${e.allDay ? ' (all day)' : ''}`).join('\n')}`
     : '';
 
-  const allTasks = identifyWeeklyTasks(db);
   const newTasks = filterNewTasks(db, allTasks);
 
   if (newTasks.length === 0) {

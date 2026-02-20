@@ -20,9 +20,9 @@ export interface Proposal {
 }
 
 // Identify coordination needs for the coming week
-export function identifyWeeklyTasks(db: DB): Task[] {
+export async function identifyWeeklyTasks(db: DB): Promise<Task[]> {
   const monday = getMonday();
-  const events = getWeekEvents(monday);
+  const events = await getWeekEvents(monday);
   const tasks: Task[] = [];
   const today = formatDate(new Date());
   const prefs = getPreferences();
