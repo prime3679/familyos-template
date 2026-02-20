@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { type Proposal } from './tasks.ts';
 import { isQuietHours, getPreferences } from './preferences.ts';
 
@@ -81,9 +82,9 @@ export async function sendTelegram(message: string, urgent = false): Promise<boo
   // Fallback: openclaw message tool
   try {
     const escaped = message.replace(/'/g, "'\\''");
-    execSync(
+    await promisify(exec)(
       `openclaw message send --channel telegram --target ${TELEGRAM_CHAT_ID} --message '${escaped}'`,
-      { encoding: 'utf8', timeout: 10000, stdio: 'pipe' }
+      { encoding: 'utf8', timeout: 10000 }
     );
     return true;
   } catch (e) {
