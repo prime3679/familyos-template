@@ -1,6 +1,7 @@
 import { type DB, getWeeklyLoad, getApprovalRate } from './db.ts';
 import { getWeekEvents, getMonday, addDays, formatDate, dayOfWeek } from './calendar.ts';
 import { getPreferences, isHardBlock, getWorkoutDays, getDropoffDays } from './preferences.ts';
+import { randomUUID } from 'node:crypto';
 
 export interface Task {
   id: string;
@@ -214,5 +215,16 @@ export function saveTasks(db: DB, tasks: Task[]): void {
   `);
   for (const task of tasks) {
     stmt.run(task.id, task.type, task.status, task.dueDate, JSON.stringify(task.metadata ?? {}));
+  }
+}
+
+// Persist proposals to DB
+export function saveProposals(db: DB, proposals: Proposal[]): void {
+  const stmt = db.prepare(`
+    INSERT INTO proposals (id, task_id, proposed_assignee, reasoning, confidence)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  for (const p of proposals) {
+    stmt.run(randomUUID(), p.task.id, p.suggestedAssignee, p.reasoning, p.confidence);
   }
 }
