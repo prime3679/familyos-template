@@ -4,18 +4,17 @@
  * node --experimental-sqlite src/health.ts
  */
 
-import { getDb } from './db.ts';
+import { getDb, type DB } from './db.ts';
 import { sendTelegram } from './notify.ts';
+import { fileURLToPath } from 'url';
 
-const db = getDb();
-
-interface HealthReport {
+export interface HealthReport {
   ok: boolean;
   issues: string[];
   stats: Record<string, unknown>;
 }
 
-function checkHealth(): HealthReport {
+export function checkHealth(db: DB): HealthReport {
   const issues: string[] = [];
   const stats: Record<string, unknown> = {};
 
@@ -69,22 +68,25 @@ function checkHealth(): HealthReport {
   };
 }
 
-const report = checkHealth();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const db = getDb();
+  const report = checkHealth(db);
 
-if (!report.ok) {
-  const msg = [
-    '⚠️ *FamilyOS Health Check*',
-    '',
-    ...report.issues.map(i => `• ${i}`),
-    '',
-    `Tasks: ${report.stats.totalTasks} | Decisions: ${report.stats.totalDecisions}`,
-  ].join('\n');
+  if (!report.ok) {
+    const msg = [
+      '⚠️ *FamilyOS Health Check*',
+      '',
+      ...report.issues.map(i => `• ${i}`),
+      '',
+      `Tasks: ${report.stats.totalTasks} | Decisions: ${report.stats.totalDecisions}`,
+    ].join('\n');
 
-  await sendTelegram(msg, true);
-  console.log('[health] Issues found:', report.issues);
-} else {
-  console.log('[health] ✓ All good');
-  console.log('[health] Stats:', JSON.stringify(report.stats, null, 2));
+    await sendTelegram(msg, true);
+    console.log('[health] Issues found:', report.issues);
+  } else {
+    console.log('[health] ✓ All good');
+    console.log('[health] Stats:', JSON.stringify(report.stats, null, 2));
+  }
+
+  process.exit(0);
 }
-
-process.exit(0);
