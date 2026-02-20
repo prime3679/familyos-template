@@ -1,4 +1,4 @@
-import { type DB, getWeeklyLoad, getApprovalRate } from './db.ts';
+import { type DB, getApprovalRate } from './db.ts';
 import { getWeekEvents, getMonday, addDays, formatDate, dayOfWeek } from './calendar.ts';
 import { getPreferences, isHardBlock, getWorkoutDays, getDropoffDays } from './preferences.ts';
 
@@ -113,13 +113,11 @@ export function identifyWeeklyTasks(db: DB): Task[] {
 export function proposeAssignment(
   db: DB,
   task: Task,
+  currentLoad: { person1: number; person2: number },
   partnerEvents: Array<{ start: string; end: string; title: string; allDay: boolean }> = [],
 ): Proposal {
-  const monday = getMonday(new Date(task.dueDate));
-  const load = getWeeklyLoad(db, formatDate(monday));
-
-  const person1Load = load.person1;
-  const person2Load = load.person2;
+  const person1Load = currentLoad.person1;
+  const person2Load = currentLoad.person2;
 
   let suggestedAssignee: 'person1' | 'person2' = 'person1';
   let reasoning = '';

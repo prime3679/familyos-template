@@ -9,10 +9,10 @@
  *   (default)  : --scan
  */
 
-import { getDb } from './db.ts';
+import { getDb, getWeeklyLoad } from './db.ts';
 import { identifyWeeklyTasks, proposeAssignment, filterNewTasks, saveTasks, type Proposal } from './tasks.ts';
 import { formatWeeklyProposal, formatDailyReminder, sendTelegram, emailPartner } from './notify.ts';
-import { formatDate, getPartnerEvents } from './calendar.ts';
+import { formatDate, getPartnerEvents, getMonday } from './calendar.ts';
 import { publishStats } from './stats.ts';
 
 const SUPERMEMORY_KEY = process.env.SUPERMEMORY_API_KEY ?? '';
@@ -85,8 +85,11 @@ async function runScan(): Promise<void> {
 
   // Generate proposals — aware of partner's calendar
   const proposals: Proposal[] = [];
+  const monday = newTasks.length > 0 ? getMonday(new Date(newTasks[0].dueDate)) : getMonday();
+  const currentLoad = getWeeklyLoad(db, formatDate(monday));
+
   for (const task of newTasks) {
-    const proposal = proposeAssignment(db, task, partnerEvents);
+    const proposal = proposeAssignment(db, task, currentLoad, partnerEvents);
     proposals.push(proposal);
   }
 
