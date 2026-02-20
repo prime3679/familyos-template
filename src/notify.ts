@@ -7,7 +7,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
 
 const AGENTMAIL_API_KEY = process.env.AGENTMAIL_API_KEY ?? '';
 const PARTNER_EMAIL = process.env.PARTNER_EMAIL ?? '';
-const AGENTMAIL_FROM_EMAIL = process.env.AGENTMAIL_FROM_EMAIL ?? 'familyos@agentmail.to';
+const AGENTMAIL_FROM_EMAIL = process.env.AGENTMAIL_FROM_EMAIL ?? '';
 
 // Format a weekly proposal batch into a clean Telegram message
 export function formatWeeklyProposal(proposals: Proposal[], partnerContext = ''): string {
@@ -219,6 +219,11 @@ export async function emailPartner(proposals: Proposal[], partnerContext = ''): 
 
   if (!PARTNER_EMAIL) {
     console.error('[notify] PARTNER_EMAIL not set — skipping partner email');
+    return false;
+  }
+
+  if (!AGENTMAIL_FROM_EMAIL) {
+    console.error('[notify] AGENTMAIL_FROM_EMAIL not set — skipping partner email');
     return false;
   }
 
