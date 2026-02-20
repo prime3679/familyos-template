@@ -114,6 +114,7 @@ export function proposeAssignment(
   db: DB,
   task: Task,
   partnerEvents: Array<{ start: string; end: string; title: string; allDay: boolean }> = [],
+  approvalRates?: Map<string, number>,
 ): Proposal {
   const monday = getMonday(new Date(task.dueDate));
   const load = getWeeklyLoad(db, formatDate(monday));
@@ -178,7 +179,13 @@ export function proposeAssignment(
   }
 
   // Factor in historical approval rate
-  const approvalRate = getApprovalRate(db, task.type, suggestedAssignee);
+  let approvalRate: number;
+  if (approvalRates) {
+    approvalRate = approvalRates.get(`${task.type}:${suggestedAssignee}`) ?? 0.5;
+  } else {
+    approvalRate = getApprovalRate(db, task.type, suggestedAssignee);
+  }
+
   if (approvalRate < 0.4) {
     // Historically rejected — flip
     suggestedAssignee = suggestedAssignee === 'person1' ? 'person2' : 'person1';

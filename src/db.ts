@@ -69,6 +69,22 @@ export function getApprovalRate(db: DB, taskType: string, assignee: string): num
   return result.approved / result.total;
 }
 
+export function getAllApprovalRates(db: DB): Map<string, number> {
+  const results = db.prepare(`
+    SELECT task_type, assigned_to, COUNT(*) as total, SUM(approved) as approved
+    FROM decisions
+    GROUP BY task_type, assigned_to
+  `).all() as Array<{ task_type: string; assigned_to: string; total: number; approved: number }>;
+
+  const rates = new Map<string, number>();
+  for (const r of results) {
+    if (r.total > 0) {
+      rates.set(`${r.task_type}:${r.assigned_to}`, r.approved / r.total);
+    }
+  }
+  return rates;
+}
+
 export function getWeeklyLoad(db: DB, weekStart: string): { person1: number; person2: number } {
   const result = db.prepare(`
     SELECT

@@ -9,7 +9,7 @@
  *   (default)  : --scan
  */
 
-import { getDb } from './db.ts';
+import { getDb, getAllApprovalRates } from './db.ts';
 import { identifyWeeklyTasks, proposeAssignment, filterNewTasks, saveTasks, type Proposal } from './tasks.ts';
 import { formatWeeklyProposal, formatDailyReminder, sendTelegram, emailPartner } from './notify.ts';
 import { formatDate, getPartnerEvents } from './calendar.ts';
@@ -84,9 +84,10 @@ async function runScan(): Promise<void> {
   }
 
   // Generate proposals — aware of partner's calendar
+  const approvalRates = getAllApprovalRates(db);
   const proposals: Proposal[] = [];
   for (const task of newTasks) {
-    const proposal = proposeAssignment(db, task, partnerEvents);
+    const proposal = proposeAssignment(db, task, partnerEvents, approvalRates);
     proposals.push(proposal);
   }
 
