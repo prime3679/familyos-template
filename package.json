@@ -10,7 +10,8 @@
     "status": "node --experimental-sqlite --env-file=.env src/agent.ts --status",
     "health": "node --experimental-sqlite --env-file=.env src/health.ts",
     "approve": "node --experimental-sqlite --env-file=.env src/approve.ts --approve",
-    "dev": "tsx src/agent.ts"
+    "dev": "tsx src/agent.ts",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
