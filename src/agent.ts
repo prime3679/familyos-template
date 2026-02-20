@@ -15,29 +15,6 @@ import { formatWeeklyProposal, formatDailyReminder, sendTelegram, emailPartner }
 import { formatDate, getPartnerEvents } from './calendar.ts';
 import { publishStats } from './stats.ts';
 
-const SUPERMEMORY_KEY = process.env.SUPERMEMORY_API_KEY ?? '';
-
-async function querySupermemory(q: string): Promise<string> {
-  if (!SUPERMEMORY_KEY) return '';
-  try {
-    const res = await fetch('https://api.supermemory.ai/v3/search', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${SUPERMEMORY_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q, limit: 4 }),
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return '';
-    const data = await res.json() as { results?: Array<{ title?: string; chunks?: Array<{ content?: string }> }> };
-    return (data.results ?? [])
-      .flatMap(r => (r.chunks ?? []).map(c => c.content ?? ''))
-      .filter(Boolean)
-      .slice(0, 4)
-      .join('\n---\n');
-  } catch {
-    return '';
-  }
-}
-
 const args = process.argv.slice(2);
 const mode = args.find(a => a.startsWith('--'))?.slice(2) ?? 'scan';
 
@@ -59,15 +36,6 @@ async function runScan(): Promise<void> {
     partnerEvents.forEach(e => console.log(`  Partner: ${e.start.split('T')[0]} — ${e.title}`));
   } else {
     console.log('[agent] Partner calendar: no events found');
-  }
-
-  // Supermemory context (optional — set SUPERMEMORY_API_KEY to enable)
-  const [familyContext, actionContext] = await Promise.all([
-    querySupermemory('partner schedule travel appointments this week family constraints'),
-    querySupermemory('pending family tasks childcare appointments health'),
-  ]);
-  if (familyContext || actionContext) {
-    console.log('[agent] Supermemory context loaded');
   }
 
   // Build context string to include in proposal message
