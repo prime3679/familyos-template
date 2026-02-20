@@ -85,9 +85,7 @@ export function getPreferences(): Preferences {
   return cached;
 }
 
-export function isQuietHours(): boolean {
-  const prefs = getPreferences();
-  const now = new Date();
+export function isQuietHours(prefs: Preferences = getPreferences(), now: Date = new Date()): boolean {
   const hour = now.getHours();
 
   const quietStart = prefs.notifications?.quiet_start ?? '21:00';
