@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { type Proposal } from './tasks.ts';
 import { isQuietHours, getPreferences } from './preferences.ts';
 
@@ -80,11 +80,13 @@ export async function sendTelegram(message: string, urgent = false): Promise<boo
 
   // Fallback: openclaw message tool
   try {
-    const escaped = message.replace(/'/g, "'\\''");
-    execSync(
-      `openclaw message send --channel telegram --target ${TELEGRAM_CHAT_ID} --message '${escaped}'`,
+    const res = spawnSync(
+      'openclaw',
+      ['message', 'send', '--channel', 'telegram', '--target', TELEGRAM_CHAT_ID, '--message', message],
       { encoding: 'utf8', timeout: 10000, stdio: 'pipe' }
     );
+    if (res.error) throw res.error;
+    if (res.status !== 0) throw new Error(`openclaw exited with code ${res.status}: ${res.stderr}`);
     return true;
   } catch (e) {
     console.error('[notify] Both Telegram methods failed:', e);
