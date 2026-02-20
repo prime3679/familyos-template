@@ -72,6 +72,10 @@ export interface Preferences {
 
 let cached: Preferences | null = null;
 
+export function _setPreferencesCache(prefs: Preferences | null) {
+  cached = prefs;
+}
+
 export function getPreferences(): Preferences {
   if (cached) return cached;
   if (!fs.existsSync(PREFS_PATH)) {
