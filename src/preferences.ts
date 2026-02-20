@@ -72,6 +72,10 @@ export interface Preferences {
 
 let cached: Preferences | null = null;
 
+export function resetPreferencesCache() {
+  cached = null;
+}
+
 export function getPreferences(): Preferences {
   if (cached) return cached;
   if (!fs.existsSync(PREFS_PATH)) {
@@ -140,7 +144,7 @@ export function isHardBlock(dayName: string, taskType: string): boolean {
   const prefs = getPreferences();
 
   // Work heavy days block family task proposals
-  if (prefs.work?.heavy_days?.map(d => capitalize(d)).includes(dayName)) {
+  if (prefs.work?.heavy_days?.map(d => capitalize(d)).includes(capitalize(dayName))) {
     if (taskType === 'errand' || taskType === 'meal') return true;
   }
 
