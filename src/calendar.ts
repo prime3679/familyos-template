@@ -1,4 +1,7 @@
-import { execSync } from 'child_process';
+import { execSync, exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export interface CalendarEvent {
   id: string;
@@ -59,17 +62,17 @@ export function getEvents(from: string, to: string): CalendarEvent[] {
   return events;
 }
 
-export function getPartnerEvents(from: string, to: string): CalendarEvent[] {
+export async function getPartnerEvents(from: string, to: string): Promise<CalendarEvent[]> {
   if (!PARTNER_ACCOUNT || !PARTNER_CALENDAR_ID) {
     console.warn('[calendar] PARTNER_GOOGLE_ACCOUNT / PARTNER_CALENDAR_ID not set — skipping partner calendar');
     return [];
   }
   try {
-    const raw = execSync(
+    const { stdout } = await execAsync(
       `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
       { encoding: 'utf8', timeout: 15000 }
     );
-    return parseEvents(raw, 'person2');
+    return parseEvents(stdout, 'person2');
   } catch {
     return [];
   }

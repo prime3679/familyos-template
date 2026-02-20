@@ -53,7 +53,7 @@ async function runScan(): Promise<void> {
   const to = formatDate(weekEnd);
 
   // Partner's calendar
-  const partnerEvents = getPartnerEvents(from, to);
+  const partnerEvents = await getPartnerEvents(from, to);
   if (partnerEvents.length > 0) {
     console.log(`[agent] Partner calendar: ${partnerEvents.length} events in next 10 days`);
     partnerEvents.forEach(e => console.log(`  Partner: ${e.start.split('T')[0]} — ${e.title}`));
