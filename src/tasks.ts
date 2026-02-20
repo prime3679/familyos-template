@@ -200,10 +200,24 @@ function getLastDateNight(db: DB): string | null {
 
 // Filter out tasks already in DB
 export function filterNewTasks(db: DB, tasks: Task[]): Task[] {
-  return tasks.filter(task => {
-    const existing = db.prepare('SELECT id FROM tasks WHERE id = ?').get(task.id);
-    return !existing;
-  });
+  if (tasks.length === 0) return [];
+
+  const existingIds = new Set<string>();
+  const batchSize = 900;
+
+  for (let i = 0; i < tasks.length; i += batchSize) {
+    const batch = tasks.slice(i, i + batchSize);
+    const ids = batch.map(t => t.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `SELECT id FROM tasks WHERE id IN (${placeholders})`;
+
+    const rows = db.prepare(query).all(...ids) as { id: string }[];
+    for (const row of rows) {
+      existingIds.add(row.id);
+    }
+  }
+
+  return tasks.filter(task => !existingIds.has(task.id));
 }
 
 // Persist tasks to DB
