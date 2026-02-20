@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { type Proposal } from './tasks.ts';
 import { isQuietHours, getPreferences } from './preferences.ts';
+import { capitalize } from './utils.ts';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
@@ -138,10 +139,6 @@ function taskLabel(type: string): string {
     date_night: 'Date night',
   };
   return labels[type] ?? type;
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function getWeekLabel(): string {
