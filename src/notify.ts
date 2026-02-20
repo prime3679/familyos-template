@@ -19,15 +19,9 @@ export function formatWeeklyProposal(proposals: Proposal[], partnerContext = '')
     ''
   ];
 
-  // Group by day
-  const byDay = new Map<string, Proposal[]>();
-  for (const p of proposals) {
-    const existing = byDay.get(p.task.dueDate) ?? [];
-    existing.push(p);
-    byDay.set(p.task.dueDate, existing);
-  }
+  const grouped = groupProposalsByDay(proposals);
 
-  for (const [date, dayProposals] of [...byDay.entries()].sort()) {
+  for (const [date, dayProposals] of grouped) {
     const dayName = dayProposals[0].task.dayName;
     lines.push(`*${dayName} (${formatDisplayDate(date)})*`);
     for (const p of dayProposals) {
@@ -155,6 +149,16 @@ function formatDisplayDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function groupProposalsByDay(proposals: Proposal[]): [string, Proposal[]][] {
+  const byDay = new Map<string, Proposal[]>();
+  for (const p of proposals) {
+    const existing = byDay.get(p.task.dueDate) ?? [];
+    existing.push(p);
+    byDay.set(p.task.dueDate, existing);
+  }
+  return [...byDay.entries()].sort();
+}
+
 // Format weekly proposal as plain-text email for partner
 export function formatWeeklyProposalEmail(proposals: Proposal[], partnerContext = ''): { subject: string; text: string } {
   const subject = `FamilyOS — Week of ${getWeekLabel()}`;
@@ -180,14 +184,9 @@ export function formatWeeklyProposalEmail(proposals: Proposal[], partnerContext 
     ``
   ];
 
-  const byDay = new Map<string, Proposal[]>();
-  for (const p of proposals) {
-    const existing = byDay.get(p.task.dueDate) ?? [];
-    existing.push(p);
-    byDay.set(p.task.dueDate, existing);
-  }
+  const grouped = groupProposalsByDay(proposals);
 
-  for (const [date, dayProposals] of [...byDay.entries()].sort()) {
+  for (const [date, dayProposals] of grouped) {
     const dayName = dayProposals[0].task.dayName;
     lines.push(`${dayName} (${formatDisplayDate(date)})`);
     for (const p of dayProposals) {
