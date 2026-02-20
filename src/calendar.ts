@@ -39,7 +39,7 @@ export function getEvents(from: string, to: string): CalendarEvent[] {
   // Primary user's calendar
   try {
     const raw = execSync(
-      `gog calendar events primary --from "${from}" --to "${to}" --account ${PRIMARY_ACCOUNT} --json`,
+      `gog calendar events primary --from "${from}" --to "${to}" --account "${PRIMARY_ACCOUNT}" --json`,
       { encoding: 'utf8', timeout: 15000 }
     );
     events.push(...parseEvents(raw, 'person1'));
@@ -49,7 +49,7 @@ export function getEvents(from: string, to: string): CalendarEvent[] {
   if (PARTNER_ACCOUNT && PARTNER_CALENDAR_ID) {
     try {
       const raw = execSync(
-        `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+        `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account "${PARTNER_ACCOUNT}" --json`,
         { encoding: 'utf8', timeout: 15000 }
       );
       events.push(...parseEvents(raw, 'person2'));
@@ -66,7 +66,7 @@ export function getPartnerEvents(from: string, to: string): CalendarEvent[] {
   }
   try {
     const raw = execSync(
-      `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+      `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account "${PARTNER_ACCOUNT}" --json`,
       { encoding: 'utf8', timeout: 15000 }
     );
     return parseEvents(raw, 'person2');
@@ -89,7 +89,7 @@ export function addCalendarEvent(title: string, date: string, time: string, dura
   if (!PRIMARY_ACCOUNT) return false;
   try {
     execSync(
-      `gog calendar create primary --summary "${title}" --start "${date}T${time}" --duration ${durationMinutes} --account ${PRIMARY_ACCOUNT}`,
+      `gog calendar create primary --summary "${title}" --start "${date}T${time}" --duration ${durationMinutes} --account "${PRIMARY_ACCOUNT}"`,
       { encoding: 'utf8', timeout: 15000 }
     );
     return true;
