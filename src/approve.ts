@@ -32,7 +32,7 @@ async function approveAll(): Promise<void> {
 
   const stmt = db.prepare(`
     UPDATE tasks SET status = 'assigned', assigned_to = (
-      SELECT proposed_assignee FROM proposals WHERE task_id = id ORDER BY created_at DESC LIMIT 1
+      SELECT proposed_assignee FROM proposals WHERE task_id = tasks.id ORDER BY created_at DESC LIMIT 1
     ), approved_at = datetime('now')
     WHERE id = ?
   `);
