@@ -20,8 +20,8 @@ function parseEvents(raw: string, calendarLabel: string): CalendarEvent[] {
   return (parsed.events ?? parsed ?? []).map((e: Record<string, unknown>) => ({
     id: String(e.id ?? e.eventId ?? ''),
     title: String(e.summary ?? e.title ?? ''),
-    start: String(e.start?.dateTime ?? e.start?.date ?? e.start ?? ''),
-    end: String(e.end?.dateTime ?? e.end?.date ?? e.end ?? ''),
+    start: String((e.start as any)?.dateTime ?? (e.start as any)?.date ?? e.start ?? ''),
+    end: String((e.end as any)?.dateTime ?? (e.end as any)?.date ?? e.end ?? ''),
     calendar: calendarLabel,
     allDay: !!(e.start as Record<string, unknown>)?.date && !(e.start as Record<string, unknown>)?.dateTime,
     location: e.location ? String(e.location) : undefined,

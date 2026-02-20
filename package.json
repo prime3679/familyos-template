@@ -10,14 +10,18 @@
     "status": "node --experimental-sqlite --env-file=.env src/agent.ts --status",
     "health": "node --experimental-sqlite --env-file=.env src/health.ts",
     "approve": "node --experimental-sqlite --env-file=.env src/approve.ts --approve",
-    "dev": "tsx src/agent.ts"
+    "dev": "tsx src/agent.ts",
+    "test": "jest"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
