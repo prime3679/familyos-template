@@ -85,19 +85,6 @@ export function getTodayEvents(): CalendarEvent[] {
   return getEvents('today', 'tomorrow');
 }
 
-export function addCalendarEvent(title: string, date: string, time: string, durationMinutes = 60): boolean {
-  if (!PRIMARY_ACCOUNT) return false;
-  try {
-    execSync(
-      `gog calendar create primary --summary "${title}" --start "${date}T${time}" --duration ${durationMinutes} --account ${PRIMARY_ACCOUNT}`,
-      { encoding: 'utf8', timeout: 15000 }
-    );
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
