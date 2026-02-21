@@ -2,12 +2,8 @@ import { execSync } from 'child_process';
 import { type Proposal } from './tasks.ts';
 import { isQuietHours, getPreferences } from './preferences.ts';
 
-// Export for testing
-export const deps = {
-  execSync,
-  isQuietHours,
-  sendTelegramDirect
-};
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
 
 const AGENTMAIL_API_KEY = process.env.AGENTMAIL_API_KEY ?? '';
 const PARTNER_EMAIL = process.env.PARTNER_EMAIL ?? '';
@@ -68,28 +64,25 @@ export function formatAlert(message: string): string {
 
 // Send via Telegram API
 export async function sendTelegram(message: string, urgent = false): Promise<boolean> {
-  if (!urgent && deps.isQuietHours()) {
+  if (!urgent && isQuietHours()) {
     console.log('[notify] Quiet hours — message suppressed until morning');
     return false;
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.error('[notify] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set');
     return false;
   }
 
   // Try direct Telegram API first (most reliable)
-  const sent = await deps.sendTelegramDirect(message);
+  const sent = await sendTelegramDirect(message);
   if (sent) return true;
 
   // Fallback: openclaw message tool
   try {
     const escaped = message.replace(/'/g, "'\\''");
-    deps.execSync(
-      `openclaw message send --channel telegram --target ${chatId} --message '${escaped}'`,
+    execSync(
+      `openclaw message send --channel telegram --target ${TELEGRAM_CHAT_ID} --message '${escaped}'`,
       { encoding: 'utf8', timeout: 10000, stdio: 'pipe' }
     );
     return true;
@@ -100,16 +93,13 @@ export async function sendTelegram(message: string, urgent = false): Promise<boo
 }
 
 async function sendTelegramDirect(message: string): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token) return false;
-
+  if (!TELEGRAM_BOT_TOKEN) return false;
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: chatId,
+        chat_id: TELEGRAM_CHAT_ID,
         text: message,
         parse_mode: 'Markdown'
       })
