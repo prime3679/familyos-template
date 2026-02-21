@@ -10,8 +10,7 @@
     "status": "node --experimental-sqlite --env-file=.env src/agent.ts --status",
     "health": "node --experimental-sqlite --env-file=.env src/health.ts",
     "approve": "node --experimental-sqlite --env-file=.env src/approve.ts --approve",
-    "dev": "tsx src/agent.ts",
-    "test": "vitest run"
+    "dev": "tsx src/agent.ts"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
@@ -20,7 +19,6 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3",
-    "vitest": "^2.1.9"
+    "typescript": "^5.3.3"
   }
 }
