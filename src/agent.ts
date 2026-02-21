@@ -10,6 +10,7 @@
  */
 
 import { getDb } from './db.ts';
+import { randomUUID } from 'node:crypto';
 import { identifyWeeklyTasks, proposeAssignment, filterNewTasks, saveTasks, type Proposal } from './tasks.ts';
 import { formatWeeklyProposal, formatDailyReminder, sendTelegram, emailPartner } from './notify.ts';
 import { formatDate, getPartnerEvents } from './calendar.ts';
@@ -93,10 +94,23 @@ async function runScan(): Promise<void> {
   // Save tasks to DB
   saveTasks(db, newTasks);
 
+  const insertProposal = db.prepare(`
+    INSERT INTO proposals (id, task_id, proposed_assignee, reasoning, confidence)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
   // Mark as proposed
   for (const p of proposals) {
     db.prepare(`UPDATE tasks SET status = 'proposed', proposed_at = datetime('now') WHERE id = ?`)
       .run(p.task.id);
+
+    insertProposal.run(
+      randomUUID(),
+      p.task.id,
+      p.suggestedAssignee,
+      p.reasoning,
+      p.confidence
+    );
   }
 
   // Format and send proposal (with partner's calendar context appended)
