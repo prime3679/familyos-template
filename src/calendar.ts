@@ -1,7 +1,7 @@
-import { exec, execSync } from 'child_process';
+import { execFile, execSync } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface CalendarEvent {
   id: string;
@@ -46,8 +46,9 @@ export async function getEvents(from: string, to: string): Promise<CalendarEvent
 
   const primaryPromise = (async () => {
     try {
-      const { stdout } = await execAsync(
-        `gog calendar events primary --from "${from}" --to "${to}" --account ${PRIMARY_ACCOUNT} --json`,
+      const { stdout } = await execFileAsync(
+        'gog',
+        ['calendar', 'events', 'primary', '--from', from, '--to', to, '--account', PRIMARY_ACCOUNT, '--json'],
         { encoding: 'utf8', timeout: 15000 }
       );
       return parseEvents(stdout, 'person1');
@@ -59,8 +60,9 @@ export async function getEvents(from: string, to: string): Promise<CalendarEvent
   const partnerPromise = (async () => {
     if (PARTNER_ACCOUNT && PARTNER_CALENDAR_ID) {
       try {
-        const { stdout } = await execAsync(
-          `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+        const { stdout } = await execFileAsync(
+          'gog',
+          ['calendar', 'events', PARTNER_CALENDAR_ID, '--from', from, '--to', to, '--account', PARTNER_ACCOUNT, '--json'],
           { encoding: 'utf8', timeout: 15000 }
         );
         return parseEvents(stdout, 'person2');
@@ -83,8 +85,9 @@ export async function getPartnerEvents(from: string, to: string): Promise<Calend
     return [];
   }
   try {
-    const { stdout } = await execAsync(
-      `gog calendar events "${PARTNER_CALENDAR_ID}" --from "${from}" --to "${to}" --account ${PARTNER_ACCOUNT} --json`,
+    const { stdout } = await execFileAsync(
+      'gog',
+      ['calendar', 'events', PARTNER_CALENDAR_ID, '--from', from, '--to', to, '--account', PARTNER_ACCOUNT, '--json'],
       { encoding: 'utf8', timeout: 15000 }
     );
     return parseEvents(stdout, 'person2');
