@@ -1,15 +1,13 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawnSync } from 'child_process';
 import { type Proposal } from './tasks.ts';
 import { isQuietHours, getPreferences } from './preferences.ts';
-import { capitalize } from './utils.ts';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
 
 const AGENTMAIL_API_KEY = process.env.AGENTMAIL_API_KEY ?? '';
 const PARTNER_EMAIL = process.env.PARTNER_EMAIL ?? '';
-const AGENTMAIL_FROM_EMAIL = process.env.AGENTMAIL_FROM_EMAIL ?? '';
+const AGENTMAIL_FROM_EMAIL = process.env.AGENTMAIL_FROM_EMAIL ?? 'familyos@agentmail.to';
 
 // Format a weekly proposal batch into a clean Telegram message
 export function formatWeeklyProposal(proposals: Proposal[], partnerContext = ''): string {
@@ -21,9 +19,15 @@ export function formatWeeklyProposal(proposals: Proposal[], partnerContext = '')
     ''
   ];
 
-  const grouped = groupProposalsByDay(proposals);
+  // Group by day
+  const byDay = new Map<string, Proposal[]>();
+  for (const p of proposals) {
+    const existing = byDay.get(p.task.dueDate) ?? [];
+    existing.push(p);
+    byDay.set(p.task.dueDate, existing);
+  }
 
-  for (const [date, dayProposals] of grouped) {
+  for (const [date, dayProposals] of [...byDay.entries()].sort()) {
     const dayName = dayProposals[0].task.dayName;
     lines.push(`*${dayName} (${formatDisplayDate(date)})*`);
     for (const p of dayProposals) {
@@ -76,11 +80,13 @@ export async function sendTelegram(message: string, urgent = false): Promise<boo
 
   // Fallback: openclaw message tool
   try {
-    const escaped = message.replace(/'/g, "'\\''");
-    await promisify(exec)(
-      `openclaw message send --channel telegram --target ${TELEGRAM_CHAT_ID} --message '${escaped}'`,
-      { encoding: 'utf8', timeout: 10000 }
+    const res = spawnSync(
+      'openclaw',
+      ['message', 'send', '--channel', 'telegram', '--target', TELEGRAM_CHAT_ID, '--message', message],
+      { encoding: 'utf8', timeout: 10000, stdio: 'pipe' }
     );
+    if (res.error) throw res.error;
+    if (res.status !== 0) throw new Error(`openclaw exited with code ${res.status}: ${res.stderr}`);
     return true;
   } catch (e) {
     console.error('[notify] Both Telegram methods failed:', e);
@@ -136,6 +142,10 @@ function taskLabel(type: string): string {
   return labels[type] ?? type;
 }
 
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function getWeekLabel(): string {
   const monday = new Date();
   const day = monday.getDay();
@@ -145,16 +155,6 @@ function getWeekLabel(): string {
 
 function formatDisplayDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function groupProposalsByDay(proposals: Proposal[]): [string, Proposal[]][] {
-  const byDay = new Map<string, Proposal[]>();
-  for (const p of proposals) {
-    const existing = byDay.get(p.task.dueDate) ?? [];
-    existing.push(p);
-    byDay.set(p.task.dueDate, existing);
-  }
-  return [...byDay.entries()].sort();
 }
 
 // Format weekly proposal as plain-text email for partner
@@ -182,9 +182,14 @@ export function formatWeeklyProposalEmail(proposals: Proposal[], partnerContext 
     ``
   ];
 
-  const grouped = groupProposalsByDay(proposals);
+  const byDay = new Map<string, Proposal[]>();
+  for (const p of proposals) {
+    const existing = byDay.get(p.task.dueDate) ?? [];
+    existing.push(p);
+    byDay.set(p.task.dueDate, existing);
+  }
 
-  for (const [date, dayProposals] of grouped) {
+  for (const [date, dayProposals] of [...byDay.entries()].sort()) {
     const dayName = dayProposals[0].task.dayName;
     lines.push(`${dayName} (${formatDisplayDate(date)})`);
     for (const p of dayProposals) {
@@ -216,11 +221,6 @@ export async function emailPartner(proposals: Proposal[], partnerContext = ''): 
 
   if (!PARTNER_EMAIL) {
     console.error('[notify] PARTNER_EMAIL not set — skipping partner email');
-    return false;
-  }
-
-  if (!AGENTMAIL_FROM_EMAIL) {
-    console.error('[notify] AGENTMAIL_FROM_EMAIL not set — skipping partner email');
     return false;
   }
 
