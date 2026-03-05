@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
+import { capitalize } from './utils.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PREFS_PATH = path.join(__dirname, '..', 'config', 'preferences.yaml');
@@ -163,8 +164,4 @@ export function prefersDay(taskType: 'pickup' | 'dropoff' | 'errand', dayName: s
     return (prefs.errands?.preferred_days ?? []).includes(dayName);
   }
   return false;
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
