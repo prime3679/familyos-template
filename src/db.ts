@@ -17,7 +17,7 @@ export function getDb(): DB {
   return db;
 }
 
-export function initSchema(db: DB): void {
+function initSchema(db: DB): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,

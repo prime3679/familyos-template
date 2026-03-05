@@ -10,7 +10,7 @@
  */
 
 import { getDb } from './db.ts';
-import { identifyWeeklyTasks, proposeAssignment, filterNewTasks, saveTasks, saveProposals, type Proposal } from './tasks.ts';
+import { identifyWeeklyTasks, proposeAssignment, filterNewTasks, saveTasks, type Proposal } from './tasks.ts';
 import { formatWeeklyProposal, formatDailyReminder, sendTelegram, emailPartner } from './notify.ts';
 import { formatDate, getPartnerEvents } from './calendar.ts';
 import { publishStats } from './stats.ts';
@@ -92,9 +92,6 @@ async function runScan(): Promise<void> {
 
   // Save tasks to DB
   saveTasks(db, newTasks);
-
-  // Save proposals to DB
-  saveProposals(db, proposals);
 
   // Mark as proposed
   for (const p of proposals) {
